@@ -147,6 +147,11 @@ body {
     overflow: hidden;
 }
 
+.config-card {
+    overflow: visible;
+}
+
+
 .card-header {
     padding: 24px 32px 12px 32px;
     border-bottom: none;
