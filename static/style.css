@@ -867,3 +867,65 @@ body {
 .hidden {
     display: none !important;
 }
+
+/* Apple Style Tooltip */
+.tooltip-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    cursor: help;
+}
+
+.tooltip-icon {
+    width: 14px;
+    height: 14px;
+    color: var(--apple-text-secondary);
+    transition: var(--apple-transition);
+}
+
+.tooltip-container:hover .tooltip-icon {
+    color: var(--apple-blue);
+}
+
+.tooltip-text {
+    visibility: hidden;
+    width: 280px;
+    background-color: #1d1d1f;
+    color: var(--apple-text-primary);
+    text-align: left;
+    border: 1px solid var(--apple-border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    position: absolute;
+    z-index: 100;
+    bottom: 130%; /* Position above the icon */
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    opacity: 0;
+    font-size: 0.76rem;
+    line-height: 1.45;
+    font-weight: 400;
+    pointer-events: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+    transition: opacity 0.2s cubic-bezier(0.25, 1, 0.5, 1), transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Tooltip arrow pointing down */
+.tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: #1d1d1f transparent transparent transparent;
+}
+
+.tooltip-container:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
