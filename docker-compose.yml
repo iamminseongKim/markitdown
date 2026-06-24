@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  markitdown-web:
+    build: .
+    image: markitdown-web:latest
+    container_name: markitdown-web-app
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: always
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1

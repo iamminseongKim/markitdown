@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarkItDown Web Converter</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- CSS File -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="glass-bg-glow"></div>
+    <div class="container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <i data-lucide="file-text" class="logo-icon"></i>
+                <h1 class="logo-title">MarkIt<span>Down</span></h1>
+            </div>
+            <p class="app-subtitle">다양한 문서와 이미지를 LLM에 최적화된 마크다운(.md) 파일로 즉시 변환하세요</p>
+        </header>
+
+        <!-- Main Workspace Grid -->
+        <main class="app-workspace">
+            
+            <!-- Config & Upload Panel -->
+            <section class="control-panel">
+                <!-- Config Card -->
+                <div class="card glass-card config-card">
+                    <div class="card-header">
+                        <i data-lucide="cpu" class="card-icon"></i>
+                        <h2>AI 변환 설정 (선택)</h2>
+                    </div>
+                    <div class="card-body">
+                        <label class="toggle-container">
+                            <input type="checkbox" id="use-gemini" class="toggle-input">
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">Google Gemini API로 변환 개선</span>
+                        </label>
+                        <p class="helper-text">활성화 시, 이미지 내 텍스트(OCR), 오디오 파일 텍스트화, 복잡한 레이아웃 분석이 고도화됩니다.</p>
+                        
+                        <div id="gemini-key-wrapper" class="key-wrapper hidden">
+                            <div class="input-group">
+                                <label for="gemini-api-key">Gemini API Key</label>
+                                <div class="password-input-container">
+                                    <input type="password" id="gemini-api-key" placeholder="AI Studio에서 발급받은 API 키를 입력하세요" autocomplete="off">
+                                    <button type="button" id="toggle-key-visibility" class="btn-icon">
+                                        <i data-lucide="eye" id="eye-icon"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <span class="key-status-text">※ 입력하신 API 키는 브라우저 로컬 스토리지에만 보관됩니다.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dropzone Card -->
+                <div class="card glass-card dropzone-card">
+                    <div class="dropzone" id="drop-zone">
+                        <input type="file" id="file-input" class="file-input" accept=".pdf,.docx,.xlsx,.pptx,.png,.jpg,.jpeg,.zip,.txt,.csv,.json,.xml">
+                        <div class="dropzone-content">
+                            <div class="upload-icon-pulse">
+                                <i data-lucide="upload-cloud" class="upload-icon"></i>
+                            </div>
+                            <h3>변환할 파일 드래그 & 드롭</h3>
+                            <p>또는 여기를 클릭해서 직접 파일 선택</p>
+                            <span class="file-types">PDF, Word, Excel, PPTX, Image, ZIP, JSON, CSV 등 지원</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selected File Card (Hidden initially) -->
+                <div class="card glass-card file-info-card hidden" id="file-info-card">
+                    <div class="file-details">
+                        <i data-lucide="file" class="file-detail-icon"></i>
+                        <div class="file-detail-text">
+                            <h4 id="selected-file-name">document.pdf</h4>
+                            <p id="selected-file-size">1.2 MB</p>
+                        </div>
+                        <button id="cancel-upload" class="btn-icon delete-btn">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                    <button id="convert-btn" class="btn btn-primary btn-block">
+                        <i data-lucide="play"></i> 변환 시작하기
+                    </button>
+                </div>
+            </section>
+
+            <!-- Loading Panel -->
+            <section class="loading-panel hidden" id="loading-panel">
+                <div class="card glass-card loading-card">
+                    <div class="spinner-container">
+                        <div class="spinner">
+                            <div class="spinner-ring"></div>
+                            <div class="spinner-ring"></div>
+                            <div class="spinner-ring"></div>
+                        </div>
+                        <i data-lucide="arrow-down-to-line" class="loading-center-icon"></i>
+                    </div>
+                    <h3 id="loading-status">파일 전송 중...</h3>
+                    <p>문서 구조를 마크다운 포맷으로 재구성하고 있습니다.</p>
+                </div>
+            </section>
+
+            <!-- Result Panel -->
+            <section class="result-panel hidden" id="result-panel">
+                <div class="card glass-card result-card">
+                    <!-- Metrics Summary -->
+                    <div class="result-metrics">
+                        <div class="metric-item">
+                            <span class="metric-label">소요 시간</span>
+                            <span class="metric-value" id="metric-time">1.24s</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">글자 수</span>
+                            <span class="metric-value" id="metric-chars">3,425</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">단어 수</span>
+                            <span class="metric-value" id="metric-words">412</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">파일 크기</span>
+                            <span class="metric-value" id="metric-size">24.5 KB</span>
+                        </div>
+                    </div>
+
+                    <!-- Tabs Header -->
+                    <div class="result-tabs-header">
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" data-tab="preview">
+                                <i data-lucide="eye" class="tab-icon"></i> 미리보기
+                            </button>
+                            <button class="tab-btn" data-tab="raw">
+                                <i data-lucide="code" class="tab-icon"></i> 마크다운 코드
+                            </button>
+                        </div>
+                        <div class="tab-actions">
+                            <button id="copy-btn" class="btn btn-secondary">
+                                <i data-lucide="copy" class="btn-icon"></i> 텍스트 복사
+                            </button>
+                            <button id="download-btn" class="btn btn-primary">
+                                <i data-lucide="download" class="btn-icon"></i> 다운로드 (.md)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabs Content -->
+                    <div class="result-tabs-content">
+                        <!-- Preview Tab -->
+                        <div class="tab-pane active" id="tab-preview">
+                            <div class="markdown-preview-body" id="preview-container">
+                                <!-- Rendered Markdown will go here -->
+                            </div>
+                        </div>
+
+                        <!-- Raw Tab -->
+                        <div class="tab-pane" id="tab-raw">
+                            <div class="markdown-raw-container">
+                                <textarea id="raw-markdown-textarea" readonly></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="result-footer">
+                        <button id="reset-btn" class="btn btn-link">
+                            <i data-lucide="rotate-ccw"></i> 다른 파일 변환하기
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <i data-lucide="check-circle" class="toast-icon"></i>
+        <span id="toast-message">클립보드에 성공적으로 복사되었습니다.</span>
+    </div>
+
+    <!-- Marked.js for rendering markdown preview -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- App JavaScript -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
