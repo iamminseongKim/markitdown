@@ -853,3 +853,8 @@ body {
         grid-template-columns: 1fr 1fr;
     }
 }
+
+/* Global Utility Classes */
+.hidden {
+    display: none !important;
+}

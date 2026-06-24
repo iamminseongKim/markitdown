@@ -135,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         dropZone.parentNode.classList.add('hidden'); // Hide the dropzone card wrapper
         fileInfoCard.classList.remove('hidden');    // Show the selected file info card
+        fileInfoCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     // Cancel selection
@@ -159,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show loading state
         fileInfoCard.classList.add('hidden');
         loadingPanel.classList.remove('hidden');
+        loadingPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
         // Dynamic status text intervals
         let statusIdx = 0;
@@ -220,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Show results
             loadingPanel.classList.add('hidden');
             resultPanel.classList.remove('hidden');
+            resultPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         } catch (error) {
             console.error(error);
@@ -244,6 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fileInfoCard.classList.add('hidden');
         loadingPanel.classList.add('hidden');
         resultPanel.classList.add('hidden');
+        document.querySelector('.app-header').scrollIntoView({ behavior: 'smooth', block: 'start' });
         
         // Reset loading status default text
         loadingStatus.textContent = '파일 전송 중...';
