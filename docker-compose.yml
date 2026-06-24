@@ -11,3 +11,12 @@ services:
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
+    volumes:
+      # 호스트의 설정 파일을 컨테이너 내부에 공유하여 실시간 반영
+      - ./config.json:/app/config.json
+      # 로컬 임시 작업용 워크스페이스 마운트
+      - ./workspace:/app/workspace
+      # 구글 드라이브 마운트 경로 또는 로컬 백업 경로 마운트
+      # (기본값은 호스트의 ./backup 이며, 구글 드라이브 경로로 연동 시 아래 왼쪽 경로를 수정하십시오)
+      # 예: - /mnt/gdrive/markitdown_backups:/app/backup
+      - ./backup:/app/backup

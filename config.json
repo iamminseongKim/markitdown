@@ -1,0 +1,5 @@
+{
+  "UPLOAD_DIR": "./workspace",
+  "BACKUP_DIR": "./backup",
+  "KEEP_BACKUPS": true
+}

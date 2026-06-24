@@ -22,8 +22,34 @@ sudo ufw reload
 
 ---
 
-## 3. 소스코드 빌드 및 컨테이너 실행
-본 프로젝트 폴더(`/app` 또는 클론된 디렉토리) 내에서 Docker Compose를 사용하여 컨테이너를 빌드하고 백그라운드로 실행합니다.
+## 3. 설정 파일 및 도커 볼륨 설정 (구글 클라우드 백업 연동)
+구글 드라이브 마운트 경로를 백업 폴더로 사용하기 위해 호스트의 파일 및 설정을 사전 매핑해야 합니다.
+
+### 3.1. config.json 설정
+서버에 클론된 프로젝트 루트의 `config.json`을 열어 경로를 조정합니다.
+```json
+{
+  "UPLOAD_DIR": "./workspace",
+  "BACKUP_DIR": "/app/backup",
+  "KEEP_BACKUPS": true
+}
+```
+* **주의**: `BACKUP_DIR` 값은 도커 내부에서 참조할 고정 경로인 `/app/backup`으로 설정해 둡니다.
+
+### 3.2. docker-compose.yml 볼륨 매핑 수정
+`docker-compose.yml` 파일 내 `volumes:` 섹션에서 호스트에 마운트된 구글 클라우드 폴더 경로를 컨테이너의 `/app/backup`과 연결해 줍니다.
+```yaml
+    volumes:
+      - ./config.json:/app/config.json
+      - ./workspace:/app/workspace
+      # 왼쪽의 호스트 경로를 오라클 서버에 마운트된 구글 드라이브 절대경로로 변경하십시오.
+      - /mnt/gdrive/markitdown_backups:/app/backup
+```
+
+---
+
+## 4. 소스코드 빌드 및 컨테이너 실행
+본 프로젝트 폴더 내에서 Docker Compose를 사용하여 컨테이너를 빌드하고 백그라운드로 실행합니다.
 
 ```bash
 # 1. 기존 컨테이너가 실행 중이라면 중지 및 리소스 정리
@@ -38,10 +64,10 @@ sudo docker ps
 
 ---
 
-## 4. 호스트 Nginx 리버스 프록시 설정
+## 5. 호스트 Nginx 리버스 프록시 설정
 호스트 OS에 설치된 Nginx를 통해 외부 트래픽을 컨테이너로 전달합니다.
 
-### 4.1. Nginx 설정 파일 작성
+### 5.1. Nginx 설정 파일 작성
 `/etc/nginx/sites-available/markitdown` 파일을 생성하고 아래 설정을 붙여넣습니다.
 *(참고: `markitdown.duckdns.org` 부분은 실제 도메인으로 치환해야 합니다.)*
 
@@ -69,7 +95,7 @@ server {
 }
 ```
 
-### 4.2. 설정 활성화 및 Nginx 재로딩
+### 5.2. 설정 활성화 및 Nginx 재로딩
 작성한 설정을 활성화하고 Nginx를 테스트 후 반영합니다.
 ```bash
 # 1. 활성화 링크 생성
@@ -84,7 +110,7 @@ sudo systemctl reload nginx
 
 ---
 
-## 5. SSL (HTTPS) 적용 (Certbot)
+## 6. SSL (HTTPS) 적용 (Certbot)
 보안 연결을 위해 SSL 인증서를 발급하고 Nginx에 자동 바인딩합니다.
 ```bash
 sudo certbot --nginx -d markitdown.duckdns.org
@@ -93,7 +119,7 @@ sudo certbot --nginx -d markitdown.duckdns.org
 
 ---
 
-## 6. 배포 상태 검증
+## 7. 배포 상태 검증
 배포 완료 후 서비스 상태가 정상인지 외부 혹은 로컬에서 검증합니다.
 ```bash
 # 1. 로컬 컨테이너 HTTP 응답 테스트
