@@ -823,7 +823,16 @@ body {
 @media (min-width: 850px) {
     .app-workspace {
         display: grid;
+        grid-template-columns: 1fr;
+        justify-content: center;
+        max-width: 480px;
+        margin: 0 auto;
+        transition: max-width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    
+    .app-workspace.has-results {
         grid-template-columns: 350px 1fr;
+        max-width: 1024px;
         align-items: start;
         gap: 28px;
     }

@@ -157,6 +157,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const workspace = document.querySelector('.app-workspace');
+        const displayPanel = document.querySelector('.display-panel');
+        workspace.classList.add('has-results');
+        displayPanel.classList.remove('hidden');
+
         // Show loading state
         fileInfoCard.classList.add('hidden');
         loadingPanel.classList.remove('hidden');
@@ -227,6 +232,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error(error);
             alert(`오류 발생: ${error.message}`);
+            
+            const workspace = document.querySelector('.app-workspace');
+            const displayPanel = document.querySelector('.display-panel');
+            workspace.classList.remove('has-results');
+            displayPanel.classList.add('hidden');
+
             loadingPanel.classList.add('hidden');
             fileInfoCard.classList.remove('hidden');
         } finally {
@@ -242,6 +253,11 @@ document.addEventListener('DOMContentLoaded', () => {
         fileInput.value = '';
         rawMarkdownTextarea.value = '';
         previewContainer.innerHTML = '';
+        
+        const workspace = document.querySelector('.app-workspace');
+        const displayPanel = document.querySelector('.display-panel');
+        workspace.classList.remove('has-results');
+        displayPanel.classList.add('hidden');
         
         dropZone.parentNode.classList.remove('hidden');
         fileInfoCard.classList.add('hidden');
