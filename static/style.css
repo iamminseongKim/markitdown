@@ -951,3 +951,34 @@ body {
     transform: translateX(-50%) translateY(0);
 }
 
+/* Apple Style Select Input */
+.select-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--apple-border);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+    cursor: pointer;
+    transition: var(--apple-transition);
+    appearance: none; /* Remove default browser styling */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+.select-input:focus {
+    border-color: var(--apple-blue);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.select-input option {
+    background-color: #1d1d1f;
+    color: white;
+}
+

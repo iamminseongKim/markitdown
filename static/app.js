@@ -47,10 +47,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Gemini Configuration Setup ---
     
-    // Load saved API Key on load
+    const geminiModelSelect = document.getElementById('gemini-model');
+
+    // Load saved API Key and Model on load
     const savedKey = localStorage.getItem('gemini_api_key');
     if (savedKey) {
         geminiApiKeyInput.value = savedKey;
+    }
+    const savedModel = localStorage.getItem('gemini_model') || 'gemini-2.0-flash';
+    if (geminiModelSelect) {
+        geminiModelSelect.value = savedModel;
     }
 
     // Toggle key wrapper visibility based on checkbox
@@ -66,6 +72,13 @@ document.addEventListener('DOMContentLoaded', () => {
     geminiApiKeyInput.addEventListener('input', () => {
         localStorage.setItem('gemini_api_key', geminiApiKeyInput.value.trim());
     });
+
+    // Save selected model on change
+    if (geminiModelSelect) {
+        geminiModelSelect.addEventListener('change', () => {
+            localStorage.setItem('gemini_model', geminiModelSelect.value);
+        });
+    }
 
     // Toggle API Key visibility
     toggleKeyVisibilityBtn.addEventListener('click', () => {
@@ -192,6 +205,8 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('use_llm', useLLM);
         if (useLLM) {
             formData.append('gemini_api_key', apiKey);
+            const selectedModel = geminiModelSelect ? geminiModelSelect.value : 'gemini-2.0-flash';
+            formData.append('gemini_model', selectedModel);
         }
 
         try {

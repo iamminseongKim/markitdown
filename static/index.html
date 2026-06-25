@@ -102,6 +102,16 @@
                                 </div>
                             </div>
                             <span class="key-status-text">※ 이 키는 사용자의 로컬 스토리지에만 저장됩니다.</span>
+
+                            <div class="input-group" style="margin-top: 16px;">
+                                <label for="gemini-model">사용할 AI 모델</label>
+                                <select id="gemini-model" class="select-input">
+                                    <option value="gemini-2.0-flash">gemini-2.0-flash (속도/품질 밸런스 - 기본)</option>
+                                    <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite (경량/고속 - 프리티어 제한 적음)</option>
+                                    <option value="gemini-1.5-flash">gemini-1.5-flash (구버전 표준)</option>
+                                    <option value="gemini-1.5-pro">gemini-1.5-pro (최고 분석 품질)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -72,9 +72,9 @@ AUDIO_MIME_TYPES = {
     ".mp4": "audio/mp4"
 }
 
-def transcribe_audio_with_gemini(file_path: str, api_key: str, mime_type: str) -> str:
-    # Use gemini-2.0-flash for high-speed multimodal speech transcription
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+def transcribe_audio_with_gemini(file_path: str, api_key: str, mime_type: str, model_name: str = "gemini-2.0-flash") -> str:
+    # Use selected Gemini model for multimodal speech transcription
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
     
     with open(file_path, "rb") as f:
         audio_data = base64.b64encode(f.read()).decode("utf-8")
@@ -136,7 +136,8 @@ def read_root():
 def convert_file(
     file: UploadFile = File(...),
     use_llm: bool = Form(False),
-    gemini_api_key: str = Form(None)
+    gemini_api_key: str = Form(None),
+    gemini_model: str = Form("gemini-2.0-flash")
 ):
     # Reload config dynamically
     current_config = load_config()
@@ -177,7 +178,7 @@ def convert_file(
                 raise Exception("오디오 파일 크기가 20MB 제한을 초과했습니다. 더 짧게 분할하거나 압축하여 업로드해 주세요.")
                 
             mime_type = AUDIO_MIME_TYPES[file_ext]
-            markdown_content = transcribe_audio_with_gemini(temp_path, gemini_api_key.strip(), mime_type)
+            markdown_content = transcribe_audio_with_gemini(temp_path, gemini_api_key.strip(), mime_type, gemini_model.strip())
             conversion_time = round(time.time() - start_time, 2)
         else:
             # Initialize standard MarkItDown
@@ -186,7 +187,7 @@ def convert_file(
                     api_key=gemini_api_key.strip(),
                     base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
                 )
-                md = MarkItDown(llm_client=client, llm_model="gemini-2.0-flash")
+                md = MarkItDown(llm_client=client, llm_model=gemini_model.strip())
             else:
                 md = MarkItDown()
 
