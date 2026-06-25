@@ -246,7 +246,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error(error);
-            alert(`오류 발생: ${error.message}`);
+            
+            let userFriendlyMessage = error.message;
+            if (error.message.includes('503') || error.message.includes('UNAVAILABLE') || error.message.includes('high demand')) {
+                userFriendlyMessage = `현재 선택한 AI 모델의 사용량이 급증하여 서비스가 일시적으로 지연되고 있습니다.\n\n해결 방법: 사용할 AI 모델을 'gemini-3.1-flash-lite'(경량/고속) 또는 타 모델로 변경하여 다시 시도해 보세요.`;
+            } else if (error.message.includes('429') || error.message.includes('quota') || error.message.includes('EXHAUSTED')) {
+                userFriendlyMessage = `Gemini API 요청 한도(Rate Limit 또는 Daily Quota)를 초과했습니다.\n\n해결 방법: 다른 AI 모델(예: gemini-3.1-flash-lite)로 변경해 보거나, 잠시 후(약 1분 뒤) 다시 시도해 주십시오.`;
+            }
+            
+            alert(`오류 발생: ${userFriendlyMessage}`);
             
             const workspace = document.querySelector('.app-workspace');
             const displayPanel = document.querySelector('.display-panel');
