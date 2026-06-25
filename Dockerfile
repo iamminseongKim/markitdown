@@ -6,9 +6,10 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install basic system dependencies
+# Install basic system dependencies including ffmpeg
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install python packages
