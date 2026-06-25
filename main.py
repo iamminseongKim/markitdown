@@ -1,6 +1,8 @@
 import os
 import json
 import time
+import base64
+import httpx
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,7 +15,7 @@ app = FastAPI(title="MarkItDown Web Service")
 CONFIG_FILE = "config.json"
 DEFAULT_CONFIG = {
     "UPLOAD_DIR": "./workspace",
-    "LOG_FILE": "conversion.log"
+    "LOG_FILE": "./workspace/conversion.log"
 }
 
 def load_config():
@@ -39,7 +41,7 @@ os.makedirs(config.get("UPLOAD_DIR", "./workspace"), exist_ok=True)
 # --- Logging System ---
 def write_conversion_log(filename: str, success: bool, error_msg: str = None):
     current_config = load_config()
-    log_file = current_config.get("LOG_FILE", "conversion.log")
+    log_file = current_config.get("LOG_FILE", "./workspace/conversion.log")
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
     status = "SUCCESS" if success else f"FAILED (Reason: {error_msg})"
     log_line = f"[{timestamp}] - {filename} - {status}\n"
@@ -49,10 +51,68 @@ def write_conversion_log(filename: str, success: bool, error_msg: str = None):
     
     # Append to local log file
     try:
+        # Ensure parent log directory exists
+        parent_dir = os.path.dirname(log_file)
+        if parent_dir:
+            os.makedirs(parent_dir, exist_ok=True)
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(log_line)
     except Exception as e:
         print(f"Warning: Failed to write to log file: {str(e)}", flush=True)
+
+# --- Audio Transcription via Gemini API ---
+AUDIO_MIME_TYPES = {
+    ".m4a": "audio/x-m4a",
+    ".mp3": "audio/mp3",
+    ".wav": "audio/wav",
+    ".ogg": "audio/ogg",
+    ".flac": "audio/flac",
+    ".aac": "audio/aac",
+    ".webm": "audio/webm",
+    ".mp4": "audio/mp4"
+}
+
+def transcribe_audio_with_gemini(file_path: str, api_key: str, mime_type: str) -> str:
+    # Use gemini-2.0-flash for high-speed multimodal speech transcription
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    
+    with open(file_path, "rb") as f:
+        audio_data = base64.b64encode(f.read()).decode("utf-8")
+        
+    payload = {
+        "contents": [{
+            "parts": [
+                {
+                    "text": (
+                        "이 오디오 파일의 음성을 한글로 텍스트 변환(녹취록 작성)해 주고, "
+                        "대화자가 여러 명이라면 최대한 대화 형식을 유지하여 마크다운 문서로 정교하게 작성해 주세요. "
+                        "문서 최하단에는 대화 내용 요약(Summary)을 한글로 추가해 주십시오."
+                    )
+                },
+                {
+                    "inlineData": {
+                        "mimeType": mime_type,
+                        "data": audio_data
+                    }
+                }
+            ]
+        }]
+    }
+    
+    headers = {"Content-Type": "application/json"}
+    # Set a long timeout (180s) because long call recordings can take time for AI to process
+    with httpx.Client(timeout=180.0) as client:
+        response = client.post(url, json=payload, headers=headers)
+        
+    if response.status_code != 200:
+        raise Exception(f"Gemini API Error (Status {response.status_code}): {response.text}")
+        
+    result = response.json()
+    try:
+        text = result["candidates"][0]["content"]["parts"][0]["text"]
+        return text
+    except (KeyError, IndexError):
+        raise Exception(f"Failed to parse Gemini response: {json.dumps(result)}")
 
 # --- Dynamic SVG Favicon ---
 @app.get("/favicon.ico")
@@ -96,7 +156,6 @@ def convert_file(
     try:
         # Save file to upload directory
         with open(temp_path, "wb") as buffer:
-            # Chunk writing instead of copying whole file object is safer
             for chunk in iter(lambda: file.file.read(8192), b""):
                 buffer.write(chunk)
     except Exception as e:
@@ -107,24 +166,38 @@ def convert_file(
 
     start_time = time.time()
     try:
-        # Initialize MarkItDown
-        if use_llm and gemini_api_key and gemini_api_key.strip():
-            client = OpenAI(
-                api_key=gemini_api_key.strip(),
-                base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
-            )
-            md = MarkItDown(llm_client=client, llm_model="gemini-2.0-flash")
-        else:
-            md = MarkItDown()
+        file_ext = os.path.splitext(file.filename.lower())[1]
+        is_audio_file = file_ext in AUDIO_MIME_TYPES
 
-        # Perform conversion
-        result = md.convert(temp_path)
-        markdown_content = result.text_content
-        conversion_time = round(time.time() - start_time, 2)
-        size_bytes = os.path.getsize(temp_path)
+        # Bypassing MarkItDown default audio converter if Gemini is active to handle large/complex audio files
+        if is_audio_file and use_llm and gemini_api_key and gemini_api_key.strip():
+            # Check file size limit (20MB limit for Gemini generateContent inlineData REST payload)
+            size_bytes = os.path.getsize(temp_path)
+            if size_bytes > 20 * 1024 * 1024:
+                raise Exception("오디오 파일 크기가 20MB 제한을 초과했습니다. 더 짧게 분할하거나 압축하여 업로드해 주세요.")
+                
+            mime_type = AUDIO_MIME_TYPES[file_ext]
+            markdown_content = transcribe_audio_with_gemini(temp_path, gemini_api_key.strip(), mime_type)
+            conversion_time = round(time.time() - start_time, 2)
+        else:
+            # Initialize standard MarkItDown
+            if use_llm and gemini_api_key and gemini_api_key.strip():
+                client = OpenAI(
+                    api_key=gemini_api_key.strip(),
+                    base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+                )
+                md = MarkItDown(llm_client=client, llm_model="gemini-2.0-flash")
+            else:
+                md = MarkItDown()
+
+            # Perform conversion
+            result = md.convert(temp_path)
+            markdown_content = result.text_content
+            conversion_time = round(time.time() - start_time, 2)
 
         # Log conversion success without client IP
         write_conversion_log(file.filename, True)
+        size_bytes = os.path.getsize(temp_path)
 
         return JSONResponse(content={
             "status": "success",
@@ -136,8 +209,19 @@ def convert_file(
             "markdown": markdown_content
         })
     except Exception as e:
-        write_conversion_log(file.filename, False, str(e))
-        raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
+        error_msg = str(e)
+        # Catch SpeechRecognition's UnknownValueError and provide a user friendly guidance
+        if "UnknownValueError" in error_msg:
+            friendly_msg = (
+                "음성 인식(Speech Recognition)이 거부되었습니다. "
+                "대용량 녹음 파일이나 특수 코덱 음성은 구글 Gemini API 키 연동을 활성화하고 변환해야 합니다. "
+                "'Google Gemini API 연동 활성화' 체크박스를 켜고 API Key를 입력한 뒤 다시 시도해 주십시오."
+            )
+            write_conversion_log(file.filename, False, "SpeechRecognition UnknownValueError")
+            raise HTTPException(status_code=400, detail=friendly_msg)
+            
+        write_conversion_log(file.filename, False, error_msg)
+        raise HTTPException(status_code=500, detail=f"Conversion failed: {error_msg}")
     finally:
         # Clean up temp upload file immediately to maintain OCI storage
         if os.path.exists(temp_path):
