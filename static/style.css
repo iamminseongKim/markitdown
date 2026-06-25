@@ -331,6 +331,12 @@ body {
     color: var(--apple-danger);
 }
 
+.delete-btn svg,
+.delete-btn i {
+    width: 20px;
+    height: 20px;
+}
+
 /* Config panel items */
 .toggle-container {
     display: flex;
@@ -445,10 +451,6 @@ body {
 }
 
 .btn-icon {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
     background: transparent;
     border: none;
     color: var(--apple-text-secondary);
@@ -457,10 +459,19 @@ body {
     align-items: center;
     justify-content: center;
     padding: 6px;
+    border-radius: 50%;
+    transition: var(--apple-transition);
 }
 
 .btn-icon:hover {
     color: var(--apple-text-primary);
+}
+
+.password-input-container .btn-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .key-status-text {
@@ -484,6 +495,12 @@ body {
     border: none;
     cursor: pointer;
     transition: var(--apple-transition);
+}
+
+.btn svg,
+.btn i {
+    width: 18px;
+    height: 18px;
 }
 
 .btn-block {
