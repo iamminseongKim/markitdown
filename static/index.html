@@ -24,7 +24,11 @@
                 <span>MarkItDown</span>
             </a>
             <div class="nav-links">
-                <span class="nav-badge">Beta v1.1</span>
+                <button id="guide-trigger" class="nav-link-btn">
+                    <i data-lucide="help-circle" class="nav-link-icon"></i>
+                    <span>사용 가이드</span>
+                </button>
+                <span class="nav-badge">Beta v1.2</span>
             </div>
         </div>
     </nav>
@@ -199,6 +203,86 @@
     <div id="toast" class="toast hidden">
         <i data-lucide="check" class="toast-icon"></i>
         <span id="toast-message">클립보드에 복사되었습니다.</span>
+    </div>
+
+    <!-- User Guide Modal -->
+    <div id="guide-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-wrapper">
+            <div class="modal-header">
+                <div class="modal-header-title">
+                    <i data-lucide="help-circle" class="modal-header-icon"></i>
+                    <h2>MarkItDown 사용 설명서</h2>
+                </div>
+                <button id="close-guide" class="modal-close-btn">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <section class="guide-section">
+                    <h3>💡 AI 없이 즉시 무료 변환 (로컬 변환)</h3>
+                    <p>기본 마크다운 변환 엔진을 활용해 OCI 서버 자체적으로 파일을 해독하여 즉시 마크다운으로 변환합니다.</p>
+                    <table class="guide-table">
+                        <thead>
+                            <tr>
+                                <th>대상 파일</th>
+                                <th>변환 형태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Word (`.docx`)</strong></td>
+                                <td>본문 본편 구조, 제목 스타일, 표 자동 복원</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Excel (`.xlsx`)</strong></td>
+                                <td>스프레드시트 시트 데이터를 마크다운 표로 변환</td>
+                            </tr>
+                            <tr>
+                                <td><strong>PPTX (`.pptx`)</strong></td>
+                                <td>슬라이드별 텍스트 박스를 구조화된 문서로 추출</td>
+                            </tr>
+                            <tr>
+                                <td><strong>PDF (텍스트형)</strong></td>
+                                <td>드래그가 가능한 일반 PDF의 텍스트와 데이터 복원</td>
+                            </tr>
+                            <tr>
+                                <td><strong>텍스트 (`.txt`, `.csv`, `.json`)</strong></td>
+                                <td>인코딩 정돈 및 마크다운 원문 구성</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="guide-section">
+                    <h3>✨ AI(Gemini) 연동 변환 (고급 분석)</h3>
+                    <p>Google Gemini API Key를 입력하여 활성화하면 시각/청각 자료를 고도의 AI 모델로 해석합니다.</p>
+                    <ul class="guide-list">
+                        <li>
+                            <div class="guide-item-title">
+                                <i data-lucide="image" class="guide-item-icon"></i>
+                                <strong>이미지 분석 (OCR / 설명)</strong>
+                            </div>
+                            <p>이미지(`PNG`, `JPG`) 속 글자를 정밀 분석하여 텍스트로 추출하며, 아키텍처 다이어그램이나 복잡한 그래프를 분석하여 설명글을 마크다운 문서로 작성해 줍니다.</p>
+                        </li>
+                        <li>
+                            <div class="guide-item-title">
+                                <i data-lucide="music" class="guide-item-icon"></i>
+                                <strong>오디오 음성 전사 (Speech-to-Text)</strong>
+                            </div>
+                            <p>통화 녹음 및 대화 파일(`.m4a`, `.mp3` 등)의 음성을 분석하여 대화 형식(녹취록)으로 전사하고, 문서 최하단에 한글 요약(Summary)을 자동 추가합니다.</p>
+                        </li>
+                        <li>
+                            <div class="guide-item-title">
+                                <i data-lucide="alert-circle" class="guide-item-icon"></i>
+                                <strong>오류 대처 팁 (Rate Limit/Quota 429/503)</strong>
+                            </div>
+                            <p>구글 API 호출 도중 서버 트래픽이 몰리거나 한도 초과 시 429/503 에러가 발생할 수 있습니다. 이 경우 <strong>사용할 AI 모델</strong> 드롭다운을 <strong>`gemini-3.1-flash-lite`</strong>로 설정해 우회해 보세요.</p>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+        </div>
     </div>
 
     <!-- Marked.js for rendering markdown preview -->

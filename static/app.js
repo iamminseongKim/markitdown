@@ -383,4 +383,37 @@ document.addEventListener('DOMContentLoaded', () => {
             toast.classList.add('hidden');
         }, 3000);
     }
+
+    // --- User Guide Modal Handler ---
+    const guideTrigger = document.getElementById('guide-trigger');
+    const guideModal = document.getElementById('guide-modal');
+    const closeGuideBtn = document.getElementById('close-guide');
+
+    if (guideTrigger && guideModal && closeGuideBtn) {
+        guideTrigger.addEventListener('click', () => {
+            guideModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // prevent page scroll
+            lucide.createIcons(); // Refresh Lucide icons in modal
+        });
+
+        const closeGuide = () => {
+            guideModal.classList.add('hidden');
+            document.body.style.overflow = ''; // restore scroll
+        };
+
+        closeGuideBtn.addEventListener('click', closeGuide);
+
+        // Close on overlay click
+        const overlay = guideModal.querySelector('.modal-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', closeGuide);
+        }
+
+        // Close on ESC key press
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !guideModal.classList.contains('hidden')) {
+                closeGuide();
+            }
+        });
+    }
 });
