@@ -1,6 +1,5 @@
 import os
 import json
-import shutil
 import time
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Response
 from fastapi.responses import FileResponse, JSONResponse
@@ -14,8 +13,7 @@ app = FastAPI(title="MarkItDown Web Service")
 CONFIG_FILE = "config.json"
 DEFAULT_CONFIG = {
     "UPLOAD_DIR": "./workspace",
-    "BACKUP_DIR": "./backup",
-    "KEEP_BACKUPS": True
+    "LOG_FILE": "conversion.log"
 }
 
 def load_config():
@@ -37,8 +35,24 @@ config = load_config()
 # Ensure directories exist
 os.makedirs("static", exist_ok=True)
 os.makedirs(config.get("UPLOAD_DIR", "./workspace"), exist_ok=True)
-if config.get("KEEP_BACKUPS", True):
-    os.makedirs(config.get("BACKUP_DIR", "./backup"), exist_ok=True)
+
+# --- Logging System ---
+def write_conversion_log(filename: str, success: bool, error_msg: str = None):
+    current_config = load_config()
+    log_file = current_config.get("LOG_FILE", "conversion.log")
+    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+    status = "SUCCESS" if success else f"FAILED (Reason: {error_msg})"
+    log_line = f"[{timestamp}] - {filename} - {status}\n"
+    
+    # Print to console (stdout for Docker logs)
+    print(log_line.strip(), flush=True)
+    
+    # Append to local log file
+    try:
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write(log_line)
+    except Exception as e:
+        print(f"Warning: Failed to write to log file: {str(e)}", flush=True)
 
 # --- Dynamic SVG Favicon ---
 @app.get("/favicon.ico")
@@ -64,19 +78,17 @@ def convert_file(
     use_llm: bool = Form(False),
     gemini_api_key: str = Form(None)
 ):
-    # Reload config to reflect any external changes dynamically
+    # Reload config dynamically
     current_config = load_config()
     upload_dir = current_config.get("UPLOAD_DIR", "./workspace")
-    backup_dir = current_config.get("BACKUP_DIR", "./backup")
-    keep_backups = current_config.get("KEEP_BACKUPS", True)
 
     os.makedirs(upload_dir, exist_ok=True)
 
     if not file.filename:
+        write_conversion_log("Unknown", False, "No file uploaded (empty filename)")
         raise HTTPException(status_code=400, detail="No file uploaded.")
 
     # Generate path in OCI local workspace
-    # Keep the original filename at the end to help MarkItDown parse the file extension correctly
     timestamp_ms = int(time.time() * 1000)
     safe_filename = f"tmp_{timestamp_ms}_{file.filename}"
     temp_path = os.path.join(upload_dir, safe_filename)
@@ -84,10 +96,13 @@ def convert_file(
     try:
         # Save file to upload directory
         with open(temp_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            # Chunk writing instead of copying whole file object is safer
+            for chunk in iter(lambda: file.file.read(8192), b""):
+                buffer.write(chunk)
     except Exception as e:
         if os.path.exists(temp_path):
             os.unlink(temp_path)
+        write_conversion_log(file.filename, False, f"Failed to save upload file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to save upload file: {str(e)}")
 
     start_time = time.time()
@@ -108,25 +123,8 @@ def convert_file(
         conversion_time = round(time.time() - start_time, 2)
         size_bytes = os.path.getsize(temp_path)
 
-        # Handle file backup (copying to mounted Google Drive path)
-        if keep_backups and backup_dir:
-            try:
-                os.makedirs(backup_dir, exist_ok=True)
-                timestamp_prefix = time.strftime("%Y%m%d_%H%M%S")
-                
-                # Backup paths
-                backup_orig_path = os.path.join(backup_dir, f"{timestamp_prefix}_{file.filename}")
-                backup_md_path = os.path.join(backup_dir, f"{timestamp_prefix}_{file.filename}.md")
-                
-                # Copy original file to backup dir
-                shutil.copy2(temp_path, backup_orig_path)
-                
-                # Write converted markdown file to backup dir
-                with open(backup_md_path, "w", encoding="utf-8") as md_file:
-                    md_file.write(markdown_content)
-            except Exception as backup_error:
-                # If backup fails (e.g. Google Drive disconnected), log it but don't crash the core API
-                print(f"Warning: Backup failed: {str(backup_error)}")
+        # Log conversion success without client IP
+        write_conversion_log(file.filename, True)
 
         return JSONResponse(content={
             "status": "success",
@@ -138,6 +136,7 @@ def convert_file(
             "markdown": markdown_content
         })
     except Exception as e:
+        write_conversion_log(file.filename, False, str(e))
         raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
     finally:
         # Clean up temp upload file immediately to maintain OCI storage

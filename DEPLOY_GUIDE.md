@@ -22,28 +22,27 @@ sudo ufw reload
 
 ---
 
-## 3. 설정 파일 및 도커 볼륨 설정 (구글 클라우드 백업 연동)
-구글 드라이브 마운트 경로를 백업 폴더로 사용하기 위해 호스트의 파일 및 설정을 사전 매핑해야 합니다.
+## 3. 설정 파일 및 도커 볼륨 설정 (임시 작업 및 로그 경로 연동)
+개인정보 보호(IP 수집 안 함) 및 파일 보안(서버 물리 저장 배제) 정책을 반영하여 임시 작업 공간과 로그 파일만을 연동합니다.
 
 ### 3.1. config.json 설정
-서버에 클론된 프로젝트 루트의 `config.json`을 열어 경로를 조정합니다.
+서버에 클론된 프로젝트 루트의 `config.json`을 열어 경로를 확인합니다.
 ```json
 {
   "UPLOAD_DIR": "./workspace",
-  "BACKUP_DIR": "/app/backup",
-  "KEEP_BACKUPS": true
+  "LOG_FILE": "./workspace/conversion.log"
 }
 ```
-* **주의**: `BACKUP_DIR` 값은 도커 내부에서 참조할 고정 경로인 `/app/backup`으로 설정해 둡니다.
+* **동작 방식**: 파일 변환이 실행되면 `UPLOAD_DIR` 하위에 임시 저장 및 가공이 수행되며, 가공이 끝나면(성공/실패 여부 관계없이) 원본 임시 파일은 즉시 영구 삭제됩니다.
+* **로그 방식**: 변환 이력(`[시간] - [파일명] - [성공/실패]`)만 `LOG_FILE`에 기록되며, 민감할 수 있는 클라이언트의 IP 정보는 수집하지 않습니다.
 
-### 3.2. docker-compose.yml 볼륨 매핑 수정
-`docker-compose.yml` 파일 내 `volumes:` 섹션에서 호스트에 마운트된 구글 클라우드 폴더 경로를 컨테이너의 `/app/backup`과 연결해 줍니다.
+### 3.2. docker-compose.yml 볼륨 매핑
+`docker-compose.yml` 파일 내 `volumes:` 섹션에서 호스트 디렉토리를 연결하여 변환 중의 메모리 누수를 방지하고 로그를 직접 실시간 조회할 수 있게 설정합니다.
 ```yaml
     volumes:
       - ./config.json:/app/config.json
+      # UPLOAD_DIR와 LOG_FILE을 직접 공유하여 호스트의 workspace 폴더 내에서 로그 파일(conversion.log)을 열람할 수 있습니다.
       - ./workspace:/app/workspace
-      # 왼쪽의 호스트 경로를 오라클 서버에 마운트된 구글 드라이브 절대경로로 변경하십시오.
-      - /mnt/gdrive/markitdown_backups:/app/backup
 ```
 
 ---

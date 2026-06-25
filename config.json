@@ -1,5 +1,4 @@
 {
   "UPLOAD_DIR": "./workspace",
-  "BACKUP_DIR": "./backup",
-  "KEEP_BACKUPS": true
+  "LOG_FILE": "./workspace/conversion.log"
 }
