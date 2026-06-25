@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (savedKey) {
         geminiApiKeyInput.value = savedKey;
     }
-    const savedModel = localStorage.getItem('gemini_model') || 'gemini-2.0-flash';
+    const savedModel = localStorage.getItem('gemini_model') || 'gemini-3.5-flash';
     if (geminiModelSelect) {
         geminiModelSelect.value = savedModel;
     }
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('use_llm', useLLM);
         if (useLLM) {
             formData.append('gemini_api_key', apiKey);
-            const selectedModel = geminiModelSelect ? geminiModelSelect.value : 'gemini-2.0-flash';
+            const selectedModel = geminiModelSelect ? geminiModelSelect.value : 'gemini-3.5-flash';
             formData.append('gemini_model', selectedModel);
         }
 

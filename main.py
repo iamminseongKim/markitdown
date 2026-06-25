@@ -72,7 +72,7 @@ AUDIO_MIME_TYPES = {
     ".mp4": "audio/mp4"
 }
 
-def transcribe_audio_with_gemini(file_path: str, api_key: str, mime_type: str, model_name: str = "gemini-2.0-flash") -> str:
+def transcribe_audio_with_gemini(file_path: str, api_key: str, mime_type: str, model_name: str = "gemini-3.5-flash") -> str:
     # Use selected Gemini model for multimodal speech transcription
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
     
@@ -137,7 +137,7 @@ def convert_file(
     file: UploadFile = File(...),
     use_llm: bool = Form(False),
     gemini_api_key: str = Form(None),
-    gemini_model: str = Form("gemini-2.0-flash")
+    gemini_model: str = Form("gemini-3.5-flash")
 ):
     # Reload config dynamically
     current_config = load_config()
