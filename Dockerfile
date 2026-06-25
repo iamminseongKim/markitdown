@@ -6,10 +6,11 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install basic system dependencies including ffmpeg
+# Install basic system dependencies including ffmpeg and flac
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ffmpeg \
+    flac \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install python packages
